@@ -1,6 +1,31 @@
 import lineReader from 'line-reader';
+import LogRecord from './logRecord';
+import LogCollection from './logCollection';
 
-let fieldMapping = {
+let fieldMapping = [
+    {
+        position: 0,
+        field: [ 'setLogDate' ]
+    },
+    {
+        position: 1,
+        field: [ 'setLogTime' ]
+    },
+    {
+        position: 7,
+        field: [ 'setCacheStatus' ]
+    },
+    {
+        position: 8,
+        field: [ 'setBytes' ]
+    },
+    {
+        position: 10,
+        field: [ 'setHttpHost' ]
+    }
+];
+
+let mapping = {
     0: 'date',
     1: 'time',
     7: 'status',
@@ -11,15 +36,17 @@ let fieldMapping = {
 export default class FileProcessor {
     constructor() {
         this._fieldsCount = 0;
+        this._collection = new LogCollection();
+        this._errors = [];
     }
 
     /**
-     * Gets number of tokens in the string separated by space
+     * Gets array of tokens in the string separated by space
      * @param {string} line space separated string value
-     * @returns {number} number of tokens
+     * @returns {Array} array of tokens
      */
-    getTokensCount(line) {
-        return line.split(/\s+/).length;
+    getTokens(line) {
+        return line.match(/("[^"]*")|[^\s]+/g);
     }
 
     /**
@@ -30,39 +57,60 @@ export default class FileProcessor {
     isHeader(line) {
         let result = true;
         result = result && line.startsWith('#Fields');
-        let fieldsCount = getTokensCount(line)-1;
-        result = result && (fieldsCount >= Object.keys(fieldMapping).length);
+        let fieldsCount = this.getTokens(line).length-1;
+        result = result && (fieldsCount >= fieldMapping[fieldMapping.length-1].position);
 
         return result;
     }
 
-    readFile(filePath) {
-        lineReader.open(filePath, (err, reader) => {
-            if (err) {
-                throw err;
+    parseLogRecord(line, lineNumber) {
+        try {
+            let tokens = this.getTokens(line);
+            if (tokens.length !== this._fieldsCount) {
+                throw new Error(`Expected ${this._fieldsCount}`)
             }
-            while (reader.hasNextLine()) {
-                reader.nextLine((err, line) => {
-                    if (err) {
-                        throw err;
-                    }
-                    /* Checks if header and init the fields count */
-                    if (this.isHeader(line)) {
-                        this._fieldsCount = this.getTokensCount(line)-1;
-                    }
-                    /* Throw error if fields count not obtained */
-                    if (this._fieldsCount < 1) {
-                        throw err;
-                    }
-                    console.log(line);
-                });
-            }
+            let logRecord = new LogRecord();
+            fieldMapping.forEach(mapping => logRecord[mapping.field](tokens[mapping.position]));
+            this._collection.addLogRecord(logRecord);
+        } catch (error) {
+            this._errors.push(`${error.message} on line ${lineNumber}`)
+        }
+    }
 
-            reader.close((err) => {
+    readFile(filePath) {
+        let lineIndex = 0;
+        try {
+            lineReader.open(filePath, (err, reader) => {
                 if (err) {
                     throw err;
                 }
+                while (reader.hasNextLine()) {
+                    reader.nextLine((err, line) => {
+                        if (err) {
+                            throw err;
+                        }
+                        if (this.isHeader(line)) {
+                            this._fieldsCount = this.getTokens(line).length-1;
+                        } else if (this._fieldsCount < 1) {
+                            throw err;
+                        } else {
+                            lineIndex += 1;
+                            this.parseLogRecord(line, lineIndex);
+                        }
+                    });
+                }
+
+                reader.close((err) => {
+                    if (err) {
+                        throw err;
+                    }
+                });
             });
-        });
+        } catch(error) {
+            console.log(error.message);
+        }
+
+        console.log(`Errors: ${this._errors.join('\n')}`);
+        console.log(JSON.stringify(this._collection.collection));
     }
 }

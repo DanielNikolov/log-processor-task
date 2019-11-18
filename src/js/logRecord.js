@@ -1,42 +1,79 @@
+let httpStatusMap = {
+    tcp_expired_miss: 'miss',
+    tcp_miss: 'miss',
+    tcp_hit: 'hit',
+    tcp_partial_hit: 'hit'
+};
+
 export default class LogRecord {
 
-    set httpHost(httpHost) {
-        this._httpHost = httpHost;
+    setHttpHost(httpHost) {
+        let match = httpHost.match(/:\/\/(www[0-9]?\.)?(.[^/:]+)/i);
+        if (match != null && match.length > 2 && typeof match[2] === 'string' && match[2].length > 0) {
+            this._httpHost = match[2];
+        } else {
+            return new Error(`Invalid host name in ${httpHost}`);
+        }
     }
 
-    get httpHost() {
+    getHttpHost() {
         return this._httpHost;
     }
 
-    set logDate(logDate) {
+    setLogDate(logDate) {
+        if (Date.parse(logDate) == NaN) {
+            throw new Error(`Invalid date value in ${logDate}`);
+        }
         this._logDate = logDate;
     }
 
-    get logDate() {
+    getLogDate() {
         return this._logDate;
     }
 
-    set logTime(logTime) {
-        this._logTime = logTime;
+    setLogTime(logTime) {
+        if (Date.parse('1970-01-01T' + logTime + 'Z') == NaN) {
+            throw new Error(`Invalid time value in ${logTime}`);
+        }
+        this._logTime = logTime.substring(0, 4) + '0';
     }
 
-    get logTime() {
+    getLogTime() {
         return this._logTime;
     }
 
-    set httpStatusCode(httpStatusCode) {
-        this._httpStatusCode = httpStatusCode;
+    setCacheStatus(httpStatus) {
+        let arrayStatuses = httpStatus.split('/');
+        if (arrayStatuses.length !== 2) {
+            throw new Error('Invalid cache status ' + httpStatus);
+        }
+        let cacheStatus = httpStatusMap[arrayStatuses[0].toLowerCase()];
+        if (!cacheStatus) {
+            throw new Error('Invalid cache status ' + httpStatus);
+        }
+        if (!/\d+$/.test(arrayStatuses[1])) {
+            throw new Error('Invalid cache status ' + httpStatus);
+        }
+        this._httpStatus = cacheStatus;
+        this._httpStatusCode = arrayStatuses[1];
     }
 
-    get httpStatusCode() {
+    gethttpStatusCode() {
         return this._httpStatusCode;
     }
 
-    set httpStatus(httpStatus) {
-        this._httpStatus = httpStatus;
+    gethttpStatus() {
+        return this._httpStatus;
     }
 
-    get httpStatus() {
-        return this._httpStatus;
+    setBytes(bytesCount) {
+        if (!/\d+$/.test(bytesCount)) {
+            throw new Error('Invalid value for bytes count ' + bytesCount);
+        }
+        this._bytes = parseInt(bytesCount);
+    }
+
+    getBytes() {
+        return this._bytes;
     }
 }

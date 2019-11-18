@@ -1,7 +1,7 @@
 {
-  "name": "Vending-Machine-Task",
+  "name": "log-processor-task",
   "version": "1.0.0",
-  "description": "Vending Machine Test Task implemented using ES6 Task simulating vending machine and implemented using ES6 and pure NodeJS.",
+  "description": "Log Processor Task implemented using ES6 and pure NodeJS.",
   "scripts": {
     "console": "node -r esm src/js/main",
     "test": "mocha --require esm",
@@ -11,19 +11,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DanielNikolov/Vending-Machine-Task.git"
+    "url": "git+https://github.com/DanielNikolov/log-processor-task.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/DanielNikolov/Vending-Machine-Task/issues"
+    "url": "https://github.com/DanielNikolov/log-processor-task/issues"
   },
-  "homepage": "https://github.com/DanielNikolov/Vending-Machine-Task#readme",
+  "homepage": "https://github.com/DanielNikolov/log-processor-task#readme",
   "devDependencies": {
     "@babel/core": "^7.5.4",
     "babel-loader": "^8.0.6",
-    "css-loader": "^3.2.0",
     "esm": "^3.2.25",
     "extract-loader": "^3.1.0",
     "file-loader": "^4.2.0",
