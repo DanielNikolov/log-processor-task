@@ -67,7 +67,7 @@ export default class FileProcessor {
                 this._fieldsCount = getTokens(line).length-1;
             } else if (this._fieldsCount > 0) {
                 try {
-                    this._collection.processLogRecord(this.getTokens(line), this._fieldsCount);
+                    this._collection.processLogRecord(getTokens(line), this._fieldsCount);
                 } catch (error) {
                     this._errors.push(`${error.message} on line ${lineIndex}`);
                 }

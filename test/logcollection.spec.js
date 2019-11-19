@@ -21,23 +21,23 @@ describe('LogCollection', function () {
     it('test - parsing valid record line', () => {
         let parseResult = true;
         try {
-            logCollection.parseLogRecord(getTokens(correctString), 18, 1);
+            logCollection.processLogRecord(getTokens(correctString), 18, 1);
         } catch(error) {
             parseResult = false;
         }
         assert.equal(parseResult, true);
-        assert(Object.keys(logCollection.collection).length > 0);
-        assert(typeof logCollection.collection['2014-04-02'] !== undefined);
+        assert(Object.keys(logCollection.logRecords).length > 0);
+        assert(typeof logCollection.logRecords['2014-04-02'] !== undefined);
     });
 
     it('test - parsing invalid record line', () => {
         let parseResult = true;
         try {
-            logCollection.parseLogRecord(getTokens(invalidString), 18, 1);
+            logCollection.processLogRecord(getTokens(invalidString), 18, 1);
         } catch(error) {
             parseResult = false;
         }
         assert.equal(parseResult, false);
-        assert(Object.keys(logCollection.collection).length < 1);
+        assert(Object.keys(logCollection.logRecords).length < 1);
     });
 })
