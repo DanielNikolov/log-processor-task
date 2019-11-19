@@ -1,6 +1,7 @@
 import LogRecord from './logRecord';
-let methodPath = ['getHttpHost', 'getLogDate', 'getLogTime', 'gethttpStatusCode', 'gethttpStatus']
-let fieldMapping = [
+
+const methodPath = ['getHttpHost', 'getLogDate', 'getLogTime', 'gethttpStatusCode', 'gethttpStatus']
+const fieldMapping = [
     {
         position: 0,
         field: [ 'setLogDate' ]
