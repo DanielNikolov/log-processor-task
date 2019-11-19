@@ -1,37 +1,6 @@
-import lineReader from 'line-reader';
-import LogRecord from './logRecord';
+import fs from 'fs';
+import readline from 'readline';
 import LogCollection from './logCollection';
-
-let fieldMapping = [
-    {
-        position: 0,
-        field: [ 'setLogDate' ]
-    },
-    {
-        position: 1,
-        field: [ 'setLogTime' ]
-    },
-    {
-        position: 7,
-        field: [ 'setCacheStatus' ]
-    },
-    {
-        position: 8,
-        field: [ 'setBytes' ]
-    },
-    {
-        position: 10,
-        field: [ 'setHttpHost' ]
-    }
-];
-
-let mapping = {
-    0: 'date',
-    1: 'time',
-    7: 'status',
-    8: 'bytes',
-    10: 'host'
-};
 
 export default class FileProcessor {
     constructor() {
@@ -55,62 +24,64 @@ export default class FileProcessor {
      * @returns {boolean} true if valid header, false otherwise
      */
     isHeader(line) {
-        let result = true;
-        result = result && line.startsWith('#Fields');
-        let fieldsCount = this.getTokens(line).length-1;
-        result = result && (fieldsCount >= fieldMapping[fieldMapping.length-1].position);
-
+        let result = false;
+        if (line.startsWith('#Fields')) {
+            this._fieldsCount = this.getTokens(line).length-1;
+            result = true;
+        }
         return result;
     }
 
-    parseLogRecord(line, lineNumber) {
-        try {
-            let tokens = this.getTokens(line);
-            if (tokens.length !== this._fieldsCount) {
-                throw new Error(`Expected ${this._fieldsCount}`)
-            }
-            let logRecord = new LogRecord();
-            fieldMapping.forEach(mapping => logRecord[mapping.field](tokens[mapping.position]));
-            this._collection.addLogRecord(logRecord);
-        } catch (error) {
-            this._errors.push(`${error.message} on line ${lineNumber}`)
+    /**
+     * Reads input file and log processing results
+     * @param {string} filePath full file path
+     */
+    async processFile(filePath) {
+        if (!filePath) {
+            console.log('No file path specified');
+            return;
         }
-    }
-
-    readFile(filePath) {
-        let lineIndex = 0;
-        try {
-            lineReader.open(filePath, (err, reader) => {
-                if (err) {
-                    throw err;
-                }
-                while (reader.hasNextLine()) {
-                    reader.nextLine((err, line) => {
+        let initFileReader = (filePath) => {
+            let stream = fs.createReadStream(filePath);
+            stream.on('error', (err) => {
+                console.log('File not found. Invalid file name or directory');
+            });
+            stream.on('end', () => {
+                if (this._errors.length > 0) {
+                    fs.writeFile('log-processor.log.err', this._errors.join('\n'), err => {
                         if (err) {
-                            throw err;
+                            console.log(`Error creating error log file. ERROR: ${err}`);
                         }
-                        if (this.isHeader(line)) {
-                            this._fieldsCount = this.getTokens(line).length-1;
-                        } else if (this._fieldsCount < 1) {
-                            throw err;
-                        } else {
-                            lineIndex += 1;
-                            this.parseLogRecord(line, lineIndex);
+                    })
+                }
+                if (Object.keys(this._collection.collection).length > 0) {
+                    fs.writeFile('log-processor.json', JSON.stringify(this._collection.collection), err => {
+                        if (err) {
+                            console.log(`Error creating json log file. ERROR: ${err}`);
                         }
                     });
                 }
-
-                reader.close((err) => {
-                    if (err) {
-                        throw err;
-                    }
-                });
             });
-        } catch(error) {
-            console.log(error.message);
-        }
+            return readline.createInterface({
+                input: stream,
+                crlfDelay: Infinity
+            });
+        };
 
-        console.log(`Errors: ${this._errors.join('\n')}`);
-        console.log(JSON.stringify(this._collection.collection));
+        let lineIndex = 0;
+        let rl = (await initFileReader(filePath));
+        rl.on('line', (line) => {
+            lineIndex++;
+            let isHeader = this.isHeader(line);
+            if (!isHeader && this._fieldsCount > 0) {
+                try {
+                    this._collection.parseLogRecord(this.getTokens(line), this._fieldsCount, lineIndex);
+                } catch (error) {
+                    this._errors.push(error.message);
+                }
+            } else if (!isHeader) {
+                this._errors.push('No valid header found in file');
+            }
+        });
     }
 }

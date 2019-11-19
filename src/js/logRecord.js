@@ -21,7 +21,7 @@ export default class LogRecord {
     }
 
     setLogDate(logDate) {
-        if (Date.parse(logDate) == NaN) {
+        if (isNaN(Date.parse(logDate))) {
             throw new Error(`Invalid date value in ${logDate}`);
         }
         this._logDate = logDate;
@@ -32,7 +32,8 @@ export default class LogRecord {
     }
 
     setLogTime(logTime) {
-        if (Date.parse('1970-01-01T' + logTime + 'Z') == NaN) {
+        console.log()
+        if (isNaN(Date.parse('1970-01-01T' + logTime + 'Z'))) {
             throw new Error(`Invalid time value in ${logTime}`);
         }
         this._logTime = logTime.substring(0, 4) + '0';
@@ -76,4 +77,14 @@ export default class LogRecord {
     getBytes() {
         return this._bytes;
     }
+
+    set fieldsCount(fieldsCount) {
+        this._fieldsCount = fieldsCount;
+    }
+
+    /*
+    parseRecordString(line, lineIndex) {
+
+    }
+    */
 }

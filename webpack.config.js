@@ -1,33 +1,13 @@
 const path = require("path");
 
 module.exports = {
-    entry: ["./src/js/client.js", "./src/scss/client.scss"],
+    entry: ["./src/js/main.js"],
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: "js/client.js"
+        filename: "js/main.js"
     },
     module: {
         rules: [
-            {
-                test: /\.scss$/,
-                use: [
-                    {
-                        loader: 'file-loader',
-                        options: {
-                            name: 'css/[name].css'
-                        }
-                    },
-                    {
-                        loader: 'extract-loader'
-                    },
-                    {
-                        loader: 'css-loader?-url'
-                    },
-                    {
-                        loader: 'sass-loader'
-                    }
-                ]
-            },
             {
                 test: /\.js?/,
                 exclude: [
@@ -39,6 +19,6 @@ module.exports = {
         ]
     },
     resolve: {
-        extensions: [".js", ".scss"]
+        extensions: [".js"]
     }
 }
