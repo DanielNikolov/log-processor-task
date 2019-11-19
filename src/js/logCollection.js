@@ -25,11 +25,11 @@ let fieldMapping = [
 
 export default class LogCollection {
     constructor() {
-        this._collection = {};
+        this._logRecords = {};
     }
 
     addLogRecord(logRecord) {
-        let treeNode = this._collection;
+        let treeNode = this._logRecords;
         methodPath.forEach(method => {
             let key = logRecord[method]();
             if (!treeNode[key]) {
@@ -45,20 +45,16 @@ export default class LogCollection {
         treeNode['bytes'] = !bytesCount ? logRecord.getBytes() : bytesCount + logRecord.getBytes();
     }
 
-    parseLogRecord(tokens, fieldsCount, lineIndex) {
+    processLogRecord(tokens, fieldsCount) {
         if (tokens.length !== fieldsCount) {
-            throw new Error(`Expected ${fieldsCount} found ${tokens.length} values on line ${lineIndex}`);
+            throw new Error(`Expected ${fieldsCount} found ${tokens.length} values`);
         }
-        try {
-            let logRecord = new LogRecord();
-            fieldMapping.forEach(mapping => logRecord[mapping.field](tokens[mapping.position]));
-            this.addLogRecord(logRecord);
-        } catch (error) {
-            throw new Error(`${error.message} on line ${lineIndex}`);
-        }
+        let logRecord = new LogRecord();
+        fieldMapping.forEach(mapping => logRecord[mapping.field](tokens[mapping.position]));
+        this.addLogRecord(logRecord);
     }
 
-    get collection() {
-        return this._collection;
+    get logRecords() {
+        return this._logRecords;
     }
 }

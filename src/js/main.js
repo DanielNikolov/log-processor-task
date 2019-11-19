@@ -1,4 +1,4 @@
 import FileProcessor from './fileProcessor';
 
 let fileProcessor = new FileProcessor();
-fileProcessor.readFile(process.argv[2]);
+fileProcessor.processFile(process.argv[2]);
