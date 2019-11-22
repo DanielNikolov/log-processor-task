@@ -1,19 +1,34 @@
-let httpStatusMap = {
+const numberRegEx = /\d+/g;
+
+const httpStatusMap = {
     tcp_expired_miss: 'miss',
     tcp_miss: 'miss',
     tcp_hit: 'hit',
     tcp_partial_hit: 'hit'
 };
 
+/**
+ * Validate string value if integer
+ * @param {string} value value to validate
+ * @returns {boolean} valid or not
+ */
+const validateInteger = (value) => {
+    let regexResult = value.match(numberRegEx);
+    if (!regexResult || regexResult.length > 1) {
+        return false;
+    }
+
+    return true;
+}
+
 export default class LogRecord {
 
-    setHttpHost(httpHost) {
-        let match = httpHost.match(/:\/\/(www[0-9]?\.)?(.[^/:]+)/i);
-        if (match != null && match.length > 2 && typeof match[2] === 'string' && match[2].length > 0) {
-            this._httpHost = match[2];
-        } else {
-            return new Error(`Invalid host name in ${httpHost}`);
+    setHttpHost(url) {
+        let hostName = url.indexOf("//") > -1 ? url.split('/')[2] : url.split('/')[0];
+        if (!hostName) {
+            throw new Error(`Invalid host name in ${url}`);
         }
+        this._httpHost = hostName;
     }
 
     getHttpHost() {
@@ -32,7 +47,6 @@ export default class LogRecord {
     }
 
     setLogTime(logTime) {
-        console.log()
         if (isNaN(Date.parse('1970-01-01T' + logTime + 'Z'))) {
             throw new Error(`Invalid time value in ${logTime}`);
         }
@@ -46,14 +60,14 @@ export default class LogRecord {
     setCacheStatus(httpStatus) {
         let arrayStatuses = httpStatus.split('/');
         if (arrayStatuses.length !== 2) {
-            throw new Error('Invalid cache status ' + httpStatus);
+            throw new Error(`Invalid cache status ${httpStatus}`);
         }
         let cacheStatus = httpStatusMap[arrayStatuses[0].toLowerCase()];
         if (!cacheStatus) {
-            throw new Error('Invalid cache status ' + httpStatus);
+            throw new Error(`Invalid cache status ${httpStatus}`);
         }
-        if (!/\d+$/.test(arrayStatuses[1])) {
-            throw new Error('Invalid cache status ' + httpStatus);
+        if (!validateInteger(arrayStatuses[1])) {
+            throw new Error(`Invalid cache status ${httpStatus}`);
         }
         this._httpStatus = cacheStatus;
         this._httpStatusCode = arrayStatuses[1];
@@ -68,9 +82,10 @@ export default class LogRecord {
     }
 
     setBytes(bytesCount) {
-        if (!/\d+$/.test(bytesCount)) {
-            throw new Error('Invalid value for bytes count ' + bytesCount);
+        if (!validateInteger(bytesCount)) {
+            throw new Error(`Invalid value for bytes count ${bytesCount}`);
         }
+
         this._bytes = parseInt(bytesCount);
     }
 
@@ -81,10 +96,4 @@ export default class LogRecord {
     set fieldsCount(fieldsCount) {
         this._fieldsCount = fieldsCount;
     }
-
-    /*
-    parseRecordString(line, lineIndex) {
-
-    }
-    */
 }
