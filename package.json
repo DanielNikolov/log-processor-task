@@ -2,11 +2,11 @@
   "name": "log-processor-task",
   "version": "1.0.0",
   "description": "Log Processor Task implemented using ES6 and pure NodeJS.",
+  "main": "index.js",
   "scripts": {
     "console": "node -r esm src/js/main",
     "test": "mocha --require esm",
-    "cover": "nyc --reporter=html mocha --require esm",
-    "build": "webpack"
+    "cover": "nyc --reporter=html mocha --require esm"
   },
   "repository": {
     "type": "git",
@@ -20,16 +20,11 @@
   },
   "homepage": "https://github.com/DanielNikolov/log-processor-task#readme",
   "devDependencies": {
-    "@babel/core": "^7.5.4",
-    "babel-loader": "^8.0.6",
     "esm": "^3.2.25",
     "mocha": "^6.2.2",
+    "nyc": "^14.1.1",
     "readline": "^1.3.0",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10"
-  },
-  "dependencies": {
-    "npm": "^6.13.0",
-    "nyc": "^14.1.1"
   }
 }
