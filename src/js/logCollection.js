@@ -1,6 +1,6 @@
 import LogRecord from './logRecord';
 
-const methodPath = ['getHttpHost', 'getLogDate', 'getLogTime', 'gethttpStatusCode', 'gethttpStatus']
+const operationsSequence = ['getHttpHost', 'getLogDate', 'getLogTime', 'gethttpStatusCode', 'gethttpStatus']
 const fieldMapping = [
     {
         position: 0,
@@ -31,8 +31,8 @@ export default class LogCollection {
 
     addLogRecord(logRecord) {
         let treeNode = this._logRecords;
-        methodPath.forEach(method => {
-            let key = logRecord[method]();
+        operationsSequence.forEach(operation => {
+            let key = logRecord[operation]();
             if (!treeNode[key]) {
                 Object.assign(treeNode, {
                     [key]: {}

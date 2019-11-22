@@ -7,14 +7,48 @@ import LogCollection from './logCollection';
  * @param {string} line space separated string value
  * @returns {boolean} true if valid header, false otherwise
  */
-let isHeader = line => line.startsWith('#Fields');
+const isHeader = line => line.startsWith('#Fields');
 
 /**
  * Gets array of tokens in the string separated by space
  * @param {string} line space separated string value
  * @returns {Array} array of tokens
  */
-let getTokens = line => line.match(/("[^"]*")|[^\s]+/g);
+const getTokens = line => line.match(/("[^"]*")|[^\s]+/g);
+
+/**
+ * Creates read file streaming interface
+ * @param {string} filePath location of the log file
+ * @param {Object} logCollectionCallback callback to collect processed log record objects
+ * @param {Array} errorsList collection of errors
+ * @returns {Object} readline interface from file
+ */
+function initFileReader(filePath, logCollection, errorsList) {
+    let stream = fs.createReadStream(filePath);
+    stream.on('error', (err) => {
+        console.log('File not found. Invalid file name or directory');
+    });
+    stream.on('end', () => {
+        if (errorsList.length > 0) {
+            fs.writeFile('log-processor.log.err', errorsList.join('\n'), err => {
+                if (err) {
+                    console.log(`Error creating error log file. ERROR: ${err}`);
+                }
+            })
+        }
+        if (Object.keys(logCollection.logRecords).length > 0) {
+            fs.writeFile('log-processor.json', JSON.stringify(logCollection.logRecords), err => {
+                if (err) {
+                    console.log(`Error creating json log file. ERROR: ${err}`);
+                }
+            });
+        }
+    });
+    return readline.createInterface({
+        input: stream,
+        crlfDelay: Infinity
+    });
+}
 
 export default class FileProcessor {
     constructor() {
@@ -24,8 +58,9 @@ export default class FileProcessor {
     }
 
     /**
-     * Reads input file and log processing results
+     * Reads input file and logs processing results
      * @param {string} filePath full file path
+     * @returns {void}
      */
     async processFile(filePath) {
         if (!filePath) {
@@ -33,35 +68,8 @@ export default class FileProcessor {
             return;
         }
 
-        let initFileReader = (filePath) => {
-            let stream = fs.createReadStream(filePath);
-            stream.on('error', (err) => {
-                console.log('File not found. Invalid file name or directory');
-            });
-            stream.on('end', () => {
-                if (this._errors.length > 0) {
-                    fs.writeFile('log-processor.log.err', this._errors.join('\n'), err => {
-                        if (err) {
-                            console.log(`Error creating error log file. ERROR: ${err}`);
-                        }
-                    })
-                }
-                if (Object.keys(this._collection.logRecords).length > 0) {
-                    fs.writeFile('log-processor.json', JSON.stringify(this._collection.logRecords), err => {
-                        if (err) {
-                            console.log(`Error creating json log file. ERROR: ${err}`);
-                        }
-                    });
-                }
-            });
-            return readline.createInterface({
-                input: stream,
-                crlfDelay: Infinity
-            });
-        };
-
         let lineIndex = 0;
-        let rl = (await initFileReader(filePath));
+        let rl = (await initFileReader(filePath, this._collection, this._errors));
         rl.on('line', (line) => {
             if (lineIndex < 1 && isHeader(line)) {
                 this._fieldsCount = getTokens(line).length-1;
